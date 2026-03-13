@@ -118,7 +118,7 @@ body {
     gap: 15px;
 }
 
-#username-input {
+#username-input, #code-input {
     padding: 12px;
     width: 100%;
     border-radius: 8px;
