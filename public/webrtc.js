@@ -81,16 +81,40 @@ async function iniciarChamada(targetId) {
 // Recebe Oferta e responde
 socket.on('offer', async (data) => {
     if (!localStream) return;
-    const pc = criarPeerConnection(data.from);
-    await pc.setRemoteDescription(data.offer);
-    const answer = await pc.createAnswer();
-    await pc.setLocalDescription(answer);
-    socket.emit('answer', { to: data.from, answer: answer });
+    
+    // Se ainda não temos a conexão com essa pessoa, criamos agora
+    let pc = peers[data.from];
+    if (!pc) {
+        pc = criarPeerConnection(data.from);
+    }
+    
+    // Se a conexão não estiver no estado inicial ('stable'), ignoramos para evitar conflito
+    if (pc.signalingState !== 'stable') {
+        return;
+    }
+
+    try {
+        await pc.setRemoteDescription(data.offer);
+        const answer = await pc.createAnswer();
+        await pc.setLocalDescription(answer);
+        socket.emit('answer', { to: data.from, answer: answer });
+    } catch (error) {
+        console.error("Erro ao processar oferta:", error);
+    }
 });
 
 // Recebe Resposta
 socket.on('answer', async (data) => {
-    await peers[data.from].setRemoteDescription(data.answer);
+    const pc = peers[data.from];
+    
+    // Só aplica a resposta se estivermos no estado correto esperando por ela
+    if (pc && pc.signalingState === 'have-local-offer') {
+        try {
+            await pc.setRemoteDescription(data.answer);
+        } catch (error) {
+            console.error("Erro ao processar resposta:", error);
+        }
+    }
 });
 
 // Recebe Rota de Rede
