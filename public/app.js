@@ -1,4 +1,33 @@
-// public/app.js
+// public/app.js (Adicione este bloco no topo do arquivo)
+
+// --- LÓGICA DE INSTALAÇÃO DO PWA ---
+let deferredPrompt;
+const installBtn = document.getElementById('install-btn');
+
+// O navegador avisa quando o app está pronto para ser instalado
+window.addEventListener('beforeinstallprompt', (e) => {
+    // Impede o navegador de mostrar a barrinha de instalação padrão dele
+    e.preventDefault();
+    // Guarda o evento para usarmos quando o usuário clicar no nosso botão
+    deferredPrompt = e;
+    // Mostra o nosso botão laranja de instalação
+    installBtn.style.display = 'block';
+});
+
+// O que acontece quando o usuário clica no botão "Instalar Aplicativo"
+installBtn.addEventListener('click', async () => {
+    // Esconde o botão
+    installBtn.style.display = 'none';
+    // Mostra a janelinha oficial de instalação do sistema (Android/Windows/Chrome)
+    deferredPrompt.prompt();
+    // Espera o usuário escolher "Instalar" ou "Cancelar"
+    const { outcome } = await deferredPrompt.userChoice;
+    console.log(`Escolha do usuário sobre a instalação: ${outcome}`);
+    // Limpa a variávels
+    deferredPrompt = null;
+});
+
+// ... (Mantenha todo o resto do seu código app.js igual!) ...
 
 const socket = io();
 
