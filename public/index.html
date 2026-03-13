@@ -5,7 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <title>Walkie-Talkie Seguro</title>
     <link rel="stylesheet" href="style.css">
+    
     <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#2c3e50">
 </head>
 <body>
 
@@ -17,6 +19,8 @@
         <input type="password" id="code-input" placeholder="Código de Acesso">
         
         <button id="join-btn">Entrar na Frequência</button>
+
+        <button id="install-btn" style="display: none; background-color: #f39c12; margin-top: 15px;">📥 Instalar Aplicativo</button>
     </div>
 
     <div id="radio-screen" class="radio-container" style="display: none;">
@@ -29,11 +33,20 @@
 
         <p id="status">Preparando...</p>
         <button id="ptt-btn" disabled>Pressione para Falar</button>
-        
         <button id="leave-btn">Desconectar / Sair</button>
     </div>
 
     <script src="/socket.io/socket.io.js"></script>
     <script src="app.js"></script>
+
+    <script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('/sw.js')
+                    .then(reg => console.log('⚙️ Service Worker registrado com sucesso!'))
+                    .catch(err => console.error('❌ Erro no Service Worker:', err));
+            });
+        }
+    </script>
 </body>
 </html>
