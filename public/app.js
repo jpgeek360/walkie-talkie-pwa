@@ -7,42 +7,63 @@ const loginScreen = document.getElementById('login-screen');
 const radioScreen = document.getElementById('radio-screen');
 const joinBtn = document.getElementById('join-btn');
 const usernameInput = document.getElementById('username-input');
-const codeInput = document.getElementById('code-input'); // Captura o novo campo de código
+const codeInput = document.getElementById('code-input');
 const pttBtn = document.getElementById('ptt-btn');
+const leaveBtn = document.getElementById('leave-btn'); // Captura o botão de sair
 const statusText = document.getElementById('status');
 const usersList = document.getElementById('users-list');
 
-// 2. VARIÁVEIS GLOBAIS DE ÁUDIO
+// 2. VARIÁVEIS GLOBAIS DE ÁUDIO E CONEXÃO
 let mediaRecorder;
 let pedacosDeAudio = [];
+let localStream; // Nova variável para guardar e poder desligar o microfone depois
 
-// Carrega o seu arquivo de som MP3 da pasta public
-// Usamos uma variável constante pois o arquivo será sempre o mesmo
+// Carrega o seu arquivo de som MP3
 const somDoRadio = new Audio('sound_1.mp3');
 
-// Função simples para tocar o MP3
 function tocarEfeitoRadio() {
-    somDoRadio.currentTime = 0; // Volta o som para o início (caso o usuário aperte muito rápido)
+    somDoRadio.currentTime = 0; 
     somDoRadio.play().catch(erro => console.log("Erro ao tocar áudio:", erro));
 }
 
 // --- LÓGICA DE LOGIN COM SENHA ---
 joinBtn.addEventListener('click', () => {
     const nome = usernameInput.value.trim();
-    const codigo = codeInput.value.trim(); // Pega o que foi digitado no código
+    const codigo = codeInput.value.trim(); 
     
-    // Verificação de segurança: O nome não pode estar vazio E o código tem que ser "jp3"
     if (nome === "") {
         alert("Por favor, digite um nome de identificação!");
     } else if (codigo !== "jp3") {
         alert("Código de acesso incorreto! Acesso negado.");
     } else {
-        // Se passou nas verificações, entra no rádio!
+        // Se o socket estiver desconectado (porque o usuário saiu antes), conecta de novo
+        if (!socket.connected) {
+            socket.connect();
+        }
+
         loginScreen.style.display = 'none';
         radioScreen.style.display = 'flex';
         
         prepararGravacao(nome);
     }
+});
+
+// --- LÓGICA DE DESCONECTAR / SAIR ---
+leaveBtn.addEventListener('click', () => {
+    // 1. Corta a comunicação com o servidor na mesma hora
+    socket.disconnect();
+
+    // 2. Desliga fisicamente a captura de áudio (apaga a luz do microfone)
+    if (localStream) {
+        localStream.getTracks().forEach(track => track.stop());
+        localStream = null;
+    }
+
+    // 3. Volta para a tela inicial e limpa a senha
+    radioScreen.style.display = 'none';
+    loginScreen.style.display = 'flex';
+    codeInput.value = ''; // Limpa a senha por segurança
+    usersList.innerHTML = ''; // Limpa a lista visualmente
 });
 
 // --- ATUALIZAÇÃO DA LISTA DE USUÁRIOS ---
@@ -58,8 +79,9 @@ socket.on('atualizar-lista', (usuarios) => {
 // --- GRAVAÇÃO E TRANSMISSÃO DE ÁUDIO ---
 async function prepararGravacao(nome) {
     try {
-        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-        mediaRecorder = new MediaRecorder(stream);
+        // Guarda a permissão na variável global localStream
+        localStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        mediaRecorder = new MediaRecorder(localStream);
 
         mediaRecorder.ondataavailable = (evento) => {
             if (evento.data.size > 0) pedacosDeAudio.push(evento.data);
@@ -86,12 +108,17 @@ socket.on('audio-recebido', (dados) => {
     const audioUrl = URL.createObjectURL(audioBlob);
     
     const reprodutor = new Audio(audioUrl);
+    
+    // MELHORIA: Toca o bipe do rádio no momento que recebe o áudio
+    tocarEfeitoRadio();
     reprodutor.play();
     
     statusText.innerText = `🔊 Ouvindo ${dados.de}...`;
     statusText.style.color = "#f39c12"; 
     
     reprodutor.onended = () => {
+        // MELHORIA: Toca o bipe do rádio quando o áudio da pessoa termina
+        tocarEfeitoRadio();
         statusText.innerText = "Conectado à frequência.";
         statusText.style.color = "white";
     };
@@ -103,7 +130,7 @@ function iniciarFala() {
         mediaRecorder.start();
         pttBtn.innerText = "Gravando...";
         pttBtn.style.backgroundColor = "#c0392b"; 
-        tocarEfeitoRadio(); // Toca o seu sound_1.mp3 ao APERTAR o botão
+        tocarEfeitoRadio(); 
     }
 }
 
@@ -112,7 +139,7 @@ function pararFala() {
         mediaRecorder.stop(); 
         pttBtn.innerText = "Pressione para Falar";
         pttBtn.style.backgroundColor = "#e74c3c"; 
-        tocarEfeitoRadio(); // Toca o seu sound_1.mp3 novamente ao SOLTAR o botão
+        tocarEfeitoRadio(); 
     }
 }
 
