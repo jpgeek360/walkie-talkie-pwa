@@ -5,48 +5,43 @@ const { Server } = require('socket.io');
 
 const app = express();
 const server = http.createServer(app);
+const io = new Server(server, { cors: { origin: "*", methods: ["GET", "POST"] } });
 
-// Configuração do Socket.io permitindo acesso (CORS)
-const io = new Server(server, {
-    cors: {
-        origin: "*", 
-        methods: ["GET", "POST"]
-    }
-});
-
-// Mais tarde, colocaremos nosso HTML/CSS/JS dentro de uma pasta 'public'
 app.use(express.static('public'));
 
-// Lógica de Sinalização WebRTC
+// Dicionário para guardar os usuários online
+const usuariosConectados = {};
+
 io.on('connection', (socket) => {
-    console.log('📻 Um usuário conectou:', socket.id);
+    // Dá um nome aleatório para o novo rádio
+    usuariosConectados[socket.id] = `Rádio ${Math.floor(Math.random() * 1000)}`;
+    console.log(`📻 ${usuariosConectados[socket.id]} conectou (${socket.id})`);
 
-    // Colocamos todos os usuários em uma sala única chamada "canal-aberto"
-    socket.join('canal-aberto');
+    // Envia a lista atualizada para TODOS na sala
+    io.emit('atualizar-lista', usuariosConectados);
 
-    // 1. Recebe a "Oferta" de conexão de um usuário e repassa para os outros na sala
-    socket.on('offer', (offer) => {
-        socket.broadcast.to('canal-aberto').emit('offer', offer);
+    // --- SINALIZAÇÃO DIRECIONADA ---
+    // Em vez de 'broadcast', agora enviamos para um 'alvo' (to) específico
+    socket.on('offer', (data) => {
+        io.to(data.to).emit('offer', { from: socket.id, offer: data.offer });
     });
 
-    // 2. Recebe a "Resposta" à oferta e repassa
-    socket.on('answer', (answer) => {
-        socket.broadcast.to('canal-aberto').emit('answer', answer);
+    socket.on('answer', (data) => {
+        io.to(data.to).emit('answer', { from: socket.id, answer: data.answer });
     });
 
-    // 3. Recebe os "Candidatos ICE" (possíveis rotas de rede) e repassa
-    socket.on('ice-candidate', (candidate) => {
-        socket.broadcast.to('canal-aberto').emit('ice-candidate', candidate);
+    socket.on('ice-candidate', (data) => {
+        io.to(data.to).emit('ice-candidate', { from: socket.id, candidate: data.candidate });
     });
 
+    // Quando alguém sai da página
     socket.on('disconnect', () => {
-        console.log('❌ Usuário desconectou:', socket.id);
+        console.log(`❌ ${usuariosConectados[socket.id]} desconectou`);
+        delete usuariosConectados[socket.id];
+        io.emit('atualizar-lista', usuariosConectados); // Atualiza a lista
+        io.emit('usuario-desconectou', socket.id); // Avisa para cortarem a conexão de áudio
     });
 });
 
-// Iniciar o servidor
 const PORT = process.env.PORT || 3000;
-server.listen(PORT, () => {
-    console.log(`🚀 Servidor de sinalização rodando na porta ${PORT}`);
-    console.log(`Acesse http://localhost:${PORT} no seu navegador (quando o frontend estiver pronto)`);
-});
+server.listen(PORT, () => console.log(`🚀 Servidor rodando na porta ${PORT}`));
