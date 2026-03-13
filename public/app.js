@@ -62,7 +62,7 @@ joinBtn.addEventListener('click', () => {
     
     if (nome === "") {
         alert("Por favor, digite um nome de identificação!");
-    } else if (codigo !== "jp3") {
+    } else if (codigo !== "jp100") {
         alert("Código de acesso incorreto! Acesso negado.");
     } else {
         // Se o socket estiver desconectado (porque o usuário saiu antes), conecta de novo
