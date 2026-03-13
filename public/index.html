@@ -3,35 +3,28 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>Walkie-Talkie PWA</title>
-    <link rel="manifest" href="manifest.json">
-    <meta name="theme-color" content="#2c3e50">
+    <title>Walkie-Talkie Multi</title>
     <link rel="stylesheet" href="style.css">
+    <link rel="manifest" href="manifest.json">
 </head>
 <body>
 
     <div class="radio-container">
         <h1>Walkie-Talkie</h1>
         
-        <p id="status">Aguardando conexão...</p>
+        <div class="users-panel">
+            <h3>Na Frequência:</h3>
+            <ul id="users-list"></ul>
+        </div>
 
+        <p id="status">Permita o microfone para iniciar...</p>
         <button id="ptt-btn" disabled>Pressione para Falar</button>
     </div>
 
-    <audio id="remote-audio" autoplay></audio>
+    <div id="audios-container"></div>
 
     <script src="/socket.io/socket.io.js"></script>
+    <script src="webrtc.js"></script>
     <script src="app.js"></script>
-    <script>
-        // Verifica se o navegador suporta Service Workers
-        if ('serviceWorker' in navigator) {
-            window.addEventListener('load', () => {
-                // Registra o nosso arquivo sw.js
-                navigator.serviceWorker.register('/sw.js')
-                    .then(reg => console.log('⚙️ Service Worker registrado com sucesso!'))
-                    .catch(err => console.error('❌ Erro no Service Worker:', err));
-            });
-        }
-    </script>
 </body>
 </html>
