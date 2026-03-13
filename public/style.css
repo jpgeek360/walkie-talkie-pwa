@@ -144,3 +144,21 @@ body {
 #join-btn:hover {
     background-color: #27ae60;
 }
+
+/* Botão de Sair */
+#leave-btn {
+    margin-top: 15px;
+    padding: 10px;
+    background-color: #7f8c8d;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 14px;
+    width: 100%;
+    transition: background-color 0.2s;
+}
+
+#leave-btn:hover {
+    background-color: #95a5a6;
+}
