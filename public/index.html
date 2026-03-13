@@ -9,7 +9,14 @@
 </head>
 <body>
 
-    <div class="radio-container">
+    <div id="login-screen" class="screen-container">
+        <h1>Rádio PWA</h1>
+        <p>Identifique-se para entrar na frequência:</p>
+        <input type="text" id="username-input" placeholder="Seu nome (Ex: Base Alfa)">
+        <button id="join-btn">Entrar na Frequência</button>
+    </div>
+
+    <div id="radio-screen" class="radio-container" style="display: none;">
         <h1>Walkie-Talkie</h1>
         
         <div class="users-panel">
@@ -17,7 +24,7 @@
             <ul id="users-list"></ul>
         </div>
 
-        <p id="status">Permita o microfone para iniciar...</p>
+        <p id="status">Preparando...</p>
         <button id="ptt-btn" disabled>Pressione para Falar</button>
     </div>
 
